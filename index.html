@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Для моего Солнца ☀️</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(180deg, #fff0f5 0%, #ffe4e1 50%, #fffacd 100%);
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-color: #5c4044;
+            --accent-pink: #ffb6c1;
+            --deep-pink: #ff6b81;
+            --shadow: 0 8px 32px 0 rgba(255, 182, 193, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            overflow-x: hidden;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Кастомный курсор (только для ПК) */
+        #cursor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-size: 20px;
+            transform: translate(-50%, -50%);
+            transition: transform 0.05s ease;
+        }
+
+        @media (pointer: coarse) {
+            #cursor { display: none; } /* Скрываем на телефонах */
+        }
+
+        /* Общие стили для Glassmorphism */
+        .glass-panel, .glass-btn, .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .glass-btn {
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .glass-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Типографика */
+        .handwritten {
+            font-family: 'Caveat', cursive;
+            font-size: 2.2rem;
+            color: var(--deep-pink);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Экран загрузки (Intro) */
+        #intro-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: var(--bg-gradient);
+            z-index: 1000;
+            transition: opacity 1.2s ease, visibility 1.2s;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .intro-title {
+            opacity: 0;
+            animation: fadeIn 2s forwards 0.5s;
+            font-size: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        #start-btn {
+            opacity: 0;
+            animation: fadeIn 2s forwards 1.5s;
+        }
+
+        .blurred {
+            filter: blur(20px);
+            height: 100vh;
+            overflow: hidden;
+            transition: filter 1.5s ease;
+        }
+
+        /* Фиксированный трекер пути (Зайчик к Солнцу) */
+        #scroll-tracker {
+            position: fixed;
+            top: 15px;
+            left: 5%;
+            width: 90%;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 20px;
+            z-index: 500;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 20px rgba(255, 182, 193, 0.15);
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .tracker-line {
+            position: relative;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 2px;
+        }
+
+        #tracker-bunny {
+            position: absolute;
+            top: -18px;
+            left: 0%;
+            font-size: 24px;
+            transition: left 0.1s ease;
+            transform: translateX(-50%);
+        }
+
+        .tracker-sun {
+            position: absolute;
+            top: -18px;
+            right: -10px;
+            font-size: 24px;
+        }
+
+        /* Главный плеер */
+        #music-player {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 500;
+        }
+
+        .vinyl {
+            font-size: 1.6rem;
+            display: inline-block;
+        }
+
+        .spin {
+            animation: rotateVinyl 4s linear infinite;
+        }
+
+        #play-pause-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        #volume-slider {
+            width: 60px;
+            accent-color: var(--deep-pink);
+            cursor: pointer;
+        }
+
+        /* Секции */
+        section {
+            min-height: 100vh;
+            padding: 100px 24px 60px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Hero Секция */
+        #hero {
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            color: #7d5c62;
+            max-width: 90%;
+        }
+
+        .hero-illustration {
+            font-size: 6rem;
+            margin-top: 2rem;
+            animation: floatAnimation 4s ease-in-out infinite;
+        }
+
+        /* Секция истории (Timeline карточки) */
+        .story-card {
+            max-width: 450px;
+            width: 100%;
+            padding: 24px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .story-emoji {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* Причины */
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .glass-card {
+            padding: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            .cards-container {
+                flex-direction: row;
+                flex-wrap: wrap;
+                max-width: 800px;
+                justify-content: center;
+            }
+            .glass-card {
+                width: calc(50% - 10px);
+            }
+        }
+
+        /* Банка воспоминаний */
+        .glass-jar {
+            font-size: 7rem;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 20px 0;
+        }
+
+        .glass-jar:active {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        #note-display {
+            padding: 20px;
+            text-align: center;
+            max-width: 90%;
+            width: 380px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Игра */
+        #catch-heart-btn {
+            margin-top: 20px;
+        }
+
+        .success-text {
+            color: var(--deep-pink);
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.8rem;
+            padding: 0 10px;
+        }
+
+        /* Финальная секция */
+        .final-illustration {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 15px;
+        }
+
+        .final-text {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            max-width: 90%;
+        }
+
+        /* Экран Последнего Секрета */
+        #last-secret-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #111113;
+            color: #fff0f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 30px;
+            text-align: center;
+        }
+
+        #typewriter-text {
+            font-size: 2rem;
+            min-height: 60px;
+            line-height: 1.4;
+        }
+
+        #hug-illustration {
+            font-size: 7rem;
+            margin-top: 30px;
+        }
+
+        /* Секретные летающие сердечки */
+        .floating-heart {
+            position: absolute;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 40;
+            opacity: 0.6;
+            padding: 10px; /* Увеличиваем тач-зону */
+            animation: floatUp 12s linear infinite;
+        }
+
+        #toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 16px 28px;
+            font-size: 1.5rem;
+            z-index: 999;
+            width: 85%;
+            max-width: 360px;
+            text-align: center;
+            animation: slideDown 0.4s ease forwards;
+        }
+
+        /* Утилиты */
+        .hidden { display: none !important; }
+        .blurred-bg { filter: blur(20px); }
+
+        /* Ключевые кадры анимаций */
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes rotateVinyl { 100% { transform: rotate(360deg); } }
+        @keyframes floatAnimation {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(105vh) scale(0.8); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) scale(1.1); opacity: 0; }
+        }
+        @keyframes slideDown {
+            0% { transform: translate(-50%, -20px); opacity: 0; }
+            100% { transform: translate(-50%, 0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="cursor">❤️</div>
+
+    <div id="intro-screen">
+        <h1 class="intro-title handwritten">Для моего Солнца ☀️</h1>
+        <button id="start-btn" class="glass-btn">Нажми сюда ❤️</button>
+    </div>
+
+    <div id="scroll-tracker">
+        <div class="tracker-line">
+            <span id="tracker-bunny">🐰</span>
+            <span class="tracker-sun">☀️</span>
+        </div>
+    </div>
+
+    <div id="music-player" class="glass-panel">
+        <span class="vinyl">🎵</span>
+        <button id="play-pause-btn">▶</button>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.5">
+    </div>
+
+    <div id="hidden-hearts-container"></div>
+
+    <main id="main-content" class="blurred">
+        
+        <section id="hero">
+            <h1 class="handwritten" style="font-size: 3.5rem;">Для моего Солнца ☀️</h1>
+            <p class="subtitle">
+                Иногда одного сайта достаточно, чтобы сказать немного больше, чем можно написать в обычном сообщении.
+            </p>
+            <div class="hero-illustration" id="hero-bunny-icon">🐰</div>
+        </section>
+
+        <section id="story">
+            <h2 class="section-title handwritten">Как всё начиналось</h2>
+    
+            <div class="story-card glass-panel">
+                <span class="story-emoji">💻</span>
+                <p>Сначала Зайчик просто занимался своими привычными делами, даже не подозревая, что скоро всё изменится.</p>
+            </div>
+
+            <div class="story-card glass-panel">
+                <span class="story-emoji">🤝✨</span>
+                <p>А потом работа свела его с одним невероятно теплым человеком. И вдруг обычные рутинные будни стали чуточку светлее.</p>
+            </div>
+
+            <div class="story-card glass-panel">
+                <span class="story-emoji">☀️</span>
+                <p>Это было Солнце. И хотя всё началось с работы, тепло ее света уже тогда начало согревать Зайчика.</p>
+            </div>
+
+            <div class="story-card glass-panel">
+                <span class="story-emoji">💬❤️</span>
+                <p>А в последние дни рабочие моменты превратились в долгие, искренние разговоры обо всём на свете, которые Зайчик так не хочет заканчивать.</p>
+            </div>
+            <div class="story-card glass-panel">
+                <span class="story-emoji">🏃‍♂️💨</span>
+                <p>С каждым днем он делал шаги навстречу, преодолевая любые расстояния.</p>
+            </div>
+        </section>
+
+        <section id="reasons">
+            <h2 class="section-title handwritten">Почему ты особенная</h2>
+            <div class="cards-container">
+                <div class="glass-card">🌸 Твоя улыбка</div>
+                <div class="glass-card">☀️ Твоя доброта</div>
+                <div class="glass-card">🐰 Наши шутки</div>
+                <div class="glass-card">💖 То, как рядом с тобой спокойно</div>
+                <div class="glass-card">✨ То, как ты заставляешь меня улыбаться</div>
+            </div>
+        </section>
+
+        <section id="memory-jar-section">
+            <h2 class="section-title handwritten">Банка записок</h2>
+            <p style="text-align: center;">Нажми на баночку, чтобы достать тёплую мысль:</p>
+            <div id="jar" class="glass-jar">🫙</div>
+            <div id="note-display" class="glass-panel hidden handwritten"></div>
+        </section>
+
+        <section id="game-section">
+            <h2 class="section-title handwritten">Помоги Зайчику</h2>
+            <p style="text-align: center; max-width: 320px;">Поймай 10 сердечек, чтобы помочь Зайчику наконец-то дойти до своего Солнца!</p>
+            <button id="catch-heart-btn" class="glass-btn">Собрать ❤️ (<span id="heart-count">0</span>/10)</button>
+            <p id="game-success" class="hidden handwritten success-text">
+                Кажется, Зайчик наконец-то нашел свое Солнце ❤️
+            </p>
+        </section>
+
+        <section id="final">
+            <div class="final-illustration">
+                <span>🐰</span><span>☀️</span>
+            </div>
+            <p class="final-text">Спасибо, что стала частью моих мыслей.</p>
+            <p class="final-text">Надеюсь, эта маленькая интерактивная открытка смогла подарить тебе искреннюю улыбку ❤️</p>
+            <button id="final-secret-btn" class="glass-btn" style="margin-top: 1rem;">У меня осталось кое-что...</button>
+        </section>
+
+    </main>
+
+    <div id="last-secret-screen" class="hidden">
+        <p id="typewriter-text" class="handwritten"></p>
+        <div id="hug-illustration" class="hidden">🐰🫂☀️</div>
+    </div>
+
+    <div id="toast" class="glass-panel hidden handwritten"></div>
+
+    <script>
+        // --- НАСТРОЙКА МУЗЫКИ ---
+        const MUSIC_URL = "assets/onelove.mp3"; // Замени на свое имя файла, если нужно
+        const audio = new Audio(MUSIC_URL);
+        audio.loop = true;
+
+        // --- БАЗЫ ДАННЫХ ДЛЯ ИНТЕРАКТИВА ---
+        const hiddenMessages = [
+            "Ты делаешь мой день ярче. ☀️", "Спасибо, что появилась в моей жизни. ❤️", "Ты невероятно красивая.",
+            "С тобой хочется улыбаться бесконечно. 🐰", "Мое самое любимое Солнце.", "Обожаю твою улыбку. ✨",
+            "С тобой так тепло и уютно.", "Ты — мое главное вдохновение.", "Люблю абсолютно все наши разговоры.",
+            "Ты просто чудо, помни об этом!", "Рядом с тобой время летит незаметно.", "Ты невероятно особенная для меня.",
+            "Каждый день, зная тебя — подарок.", "В твоей доброте можно раствориться. 🌸", "Ты заставляешь меня радоваться мелочам."
+        ];
+
+        const jarNotes = [
+            "Твоя улыбка способна растопить любой лед. ❄️❤️", "Ты — самое теплое Солнышко на свете.",
+            "Я безумно обожаю твой голос.", "С тобой даже простое молчание становится уютным.",
+            "Ты делаешь меня чуточку лучше каждый день.", "Мне нравится заботиться о тебе.",
+            "Ты прекрасна в любой момент времени.", "Скучаю по тебе, даже когда мы только попрощались.",
+            "Ты — моя самая светлая мысль перед сном. 🌙", "Каждая секунда рядом с тобой бесценна.",
+            "Я ценю каждую твою милую привычку.", "С тобой мир вокруг кажется намного ярче.",
+            "Ты заставляешь мое сердце биться капельку чаще. 💓", "Твоя поддержка значит для меня абсолютно всё.",
+            "Никогда не сомневайся в своей уникальности.", "Ты — лучик света среди любых туч. ☁️",
+            "Люблю то, как легко мы понимаем друг друга.", "Ты делаешь мир вокруг по-настоящему красивым.",
+            "Твой смех — самый прекрасный звук на свете. 🎵", "С тобой безумно тепло в любую непогоду.",
+            "Ты — моя самая сладкая и любимая мысль.", "Спасибо за твою искренность и теплоту.",
+            "Ты — мое личное маленькое чудо. ✨","Твои сообщения всегда вызывают у меня улыбку.", "Ты — лучшее, что происходит в моих мыслях.",
+            "Рядом с тобой так спокойно и безопасно.", "Ты невероятная, помни об этом всегда!",
+            "Зайчик безумно рад, что нашел свое Солнце. 🐰☀️", "Каждый день с тобой — это маленькое счастье."
+        ];
+
+        // --- КОМПОНЕНТЫ И КУРСОР ---
+        const cursor = document.getElementById('cursor');
+        const introScreen = document.getElementById('intro-screen');
+        const startBtn = document.getElementById('start-btn');
+        const mainContent = document.getElementById('main-content');
+
+        // Логика курсора мыши (работает только на десктопах)
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = `${e.clientX}px`;
+            cursor.style.top = `${e.clientY}px`;
+        });
+
+        // --- ЭФФЕКТЫ ТАПА / КЛИКА (Искры и сердечки) ---
+        document.addEventListener('click', (e) => {
+            // Игнорируем клики по кнопкам и панелям интерфейса
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.glass-panel') || e.target.closest('.floating-heart')) return;
+            
+            const particles = ['✨', '❤️', '⭐', '🌸'];
+            const count = window.matchMedia("(pointer: coarse)").matches ? 3 : 5; // На смартфонах чуть меньше частиц для оптимизации
+
+            for(let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.textContent = particles[Math.floor(Math.random() * particles.length)];
+                p.style.position = 'absolute';
+                p.style.left = `${e.pageX}px`;
+                p.style.top = `${e.pageY}px`;
+                p.style.fontSize = '22px';
+                p.style.pointerEvents = 'none';
+                p.style.transition = 'all 0.8s cubic-bezier(0.1, 0.8, 0.3, 1)';
+                p.style.zIndex = '1500';
+                document.body.appendChild(p);
+
+                const mx = (Math.random() * 80) - 40;
+                const my = -(Math.random() * 100 + 30);
+
+                setTimeout(() => {
+                    p.style.transform = `translate(${mx}px, ${my}px) scale(0)`;
+                    p.style.opacity = '0';
+                }, 10);
+
+                setTimeout(() => p.remove(), 800);
+            }
+        });
+
+        // --- ЗАПУСК СТРАНИЦЫ И МУЗЫКА ---
+        startBtn.addEventListener('click', () => {
+            introScreen.style.opacity = '0';
+            introScreen.style.visibility = 'hidden';
+            mainContent.classList.remove('blurred');
+            mainContent.style.height = 'auto';
+            mainContent.style.overflow = 'visible';
+            
+            audio.play().catch(() => console.log("Автовоспроизведение заблокировано браузером"));
+            document.querySelector('.vinyl').classList.add('spin');
+            playPauseBtn.textContent = '⏸';
+        });
+
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        playPauseBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                playPauseBtn.textContent = '⏸';
+                document.querySelector('.vinyl').classList.add('spin');
+            } else {
+                audio.pause();
+                playPauseBtn.textContent = '▶';
+                document.querySelector('.vinyl').classList.remove('spin');
+            }
+        });
+
+        document.getElementById('volume-slider').addEventListener('input', (e) => {
+            audio.volume = e.target.value;
+        });
+
+        // --- МОБИЛЬНЫЙ ТРЕКЕР СКРОЛЛА (Зайчик бежит к Солнцу) ---
+        window.addEventListener('scroll', () => {
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPos = window.scrollY;
+            let percent = (scrollPos / (docHeight || 1)) * 100;
+            if(percent > 92) percent = 92; // Чтобы не заезжал полностью под эмодзи солнца раньше времени
+            document.getElementById('tracker-bunny').style.left = `${percent}%`;
+        });
+
+        // --- СПАВН СКРЫТЫХ СЕРДЕЧЕК С СООБЩЕНИЯМИ ---
+        function createSecretHearts() {
+            const container = document.getElementById('hidden-hearts-container');
+            const totalHearts = 15;
+            for (let i = 0; i < totalHearts; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart';
+                heart.textContent = '🤍';
+                heart.style.left = `${Math.random() * 85 + 5}vw`;
+                heart.style.top = `${Math.random() * 350 + 110}vh`; // Равномерно распределяем по длине страницы
+                heart.style.animationDelay = `${Math.random() * 6}s`;
+                heart.style.animationDuration = `${Math.random() * 4 + 10}s`;
+                
+                // Обработка тапа/клика
+                heart.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    heart.textContent = '💖';
+                    confetti({ particleCount: 20, spread: 30, origin: { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight } });
+                    showToast(hiddenMessages[i % hiddenMessages.length]);
+                    setTimeout(() => heart.remove(), 1000);
+                });
+                container.appendChild(heart);
+            }
+        }
+        createSecretHearts();
+
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            toast.textContent = text;
+            toast.classList.remove('hidden');
+            
+            if(window.toastTimeout) clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => toast.classList.add('hidden'), 3500);
+        }
+
+        // --- ЛОГИКА БАНКИ ВОСПОМИНАНИЙ ---
+        const jar = document.getElementById('jar');
+        const noteDisplay = document.getElementById('note-display');
+        jar.addEventListener('click', () => {
+            const randomText = jarNotes[Math.floor(Math.random() * jarNotes.length)];
+            noteDisplay.textContent = randomText;
+            noteDisplay.classList.remove('hidden');
+        });
+
+        // --- МИНИ-ИГРА "ПОЙМАЙ СЕРДЦЕ" ---
+        let count = 0;
+        const gameBtn = document.getElementById('catch-heart-btn');
+        const successTxt = document.getElementById('game-success');
+
+        gameBtn.addEventListener('click', (e) => {
+            if (count < 10) {
+                count++;
+                document.getElementById('heart-count').textContent = count;
+                
+                // Эффект мини-взрыва конфетти при каждом клике
+                confetti({ particleCount: 15, angle: 60, spread: 55, origin: { x: 0 } });
+                confetti({ particleCount: 15, angle: 120, spread: 55, origin: { x: 1 } });
+
+                if (count === 10) {
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                    successTxt.classList.remove('hidden');
+                    gameBtn.classList.add('hidden');
+                }
+            }
+        });
+
+        // --- ЭФФЕКТ КНОПКИ ПОСЛЕДНЕГО СЕКРЕТА ---
+        const finalSecretBtn = document.getElementById('final-secret-btn');
+        finalSecretBtn.addEventListener('click', () => {
+            const secretScreen = document.getElementById('last-secret-screen');
+            secretScreen.classList.remove('hidden');
+            audio.volume = 0.15; // Приглушаем фоновую музыку для создания атмосферы
+            
+            const message = "Спасибо, что стала моим Солнцем. ❤️";
+            const typewriter = document.getElementById('typewriter-text');
+            let letterIndex = 0;
+
+            setTimeout(() => {
+                const interval = setInterval(() => {
+                    if (letterIndex < message.length) {
+                        typewriter.textContent += message.charAt(letterIndex);
+                        letterIndex++;
+                    } else {
+                        clearInterval(interval);
+                        // Появление обнимашек после завершения печатной машинки
+                        setTimeout(() => {
+                            const hug = document.getElementById('hug-illustration');
+                            hug.classList.remove('hidden');
+                            hug.style.opacity = '0';
+                            hug.style.transition = 'opacity 2s ease';
+                            setTimeout(() => {
+                                hug.style.opacity = '1';
+                                confetti({ particleCount: 100, spread: 100, colors: ['#ffb6c1', '#ff6b81'] });
+                            }, 50);
+                        }, 1000);
+                    }
+                }, 130); // Скорость печати букв
+            }, 800);
+        });
+
+        // --- ПАСХАЛКИ (Клавиатурные и Двойные Тапы) ---
+        
+        // 1. Двойной тап/клик порождает фонтан летающих сердец
+        document.addEventListener('dblclick', (e) => {
+            for(let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    const h = document.createElement('div');
+                    h.textContent = '💖';
+                    h.style.position = 'absolute';
+                    h.style.left = `${e.pageX + (Math.random() * 40 - 20)}px`;
+                    h.style.top = `${e.pageY - 20}px`;
+                    h.style.fontSize = '32px';
+                    h.style.pointerEvents = 'none';
+                    h.style.transition = 'all 1.2s cubic-bezier(0.075, 0.82, 0.165, 1)';
+                    document.body.appendChild(h);
+                    setTimeout(() => {
+                        h.style.transform = `translateY(-120px) scale(1.4) rotate(${Math.random()*60-30}deg)`;
+                        h.style.opacity = '0';
+                    }, 20);
+                    setTimeout(() => h.remove(), 1200);
+                }, i * 80);
+            }
+        });
+
+        // Клавиатурные пасхалки (для десктопа)
+        document.addEventListener('keydown', (e) => {
+            // Кнопка 'B' или 'И' - Зайчик на главной машет ушками
+            if (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 'и') {
+                const icon = document.getElementById('hero-bunny-icon');
+                icon.style.transition = 'transform 0.3s ease';
+                icon.style.transform = 'scale(1.2) rotate(-15deg)';
+                setTimeout(() => icon.style.transform = 'scale(1) rotate(0deg)', 300);
+            }
+            
+            // Кнопка 'S' или 'Ы' - Все солнышки подмигивают
+            if (e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'ы') {
+                document.body.innerHTML = document.body.innerHTML.replaceAll('☀️', '😉');
+                setTimeout(() => {
+                    document.body.innerHTML = document.body.innerHTML.replaceAll('😉', '☀️');
+                }, 1200);
+            }
+        });
+
+        // Коннами Код (Вверх-Вверх-Вниз-Вниз-Влево-Вправо-Влево-Вправо-B-A)
+        const konami = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+        let kIndex = 0;
+        document.addEventListener('keydown', (e) => {
+            if (e.key === konami[kIndex]) {
+                kIndex++;
+                if (kIndex === konami.length) {
+                    confetti({ particleCount: 250, spread: 90, shapes: ['heart'], colors: ['#ffb6c1', '#ff6b81', '#fff'] });
+                    showToast("Супер-пасхалка активирована! Зайчик любит тебя! 🐰❤️");
+                    kIndex = 0;
+                }
+            } else {
+                kIndex = 0;
+            }
+        });
+    </script>
+</body>
+</html>
